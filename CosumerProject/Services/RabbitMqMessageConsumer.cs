@@ -1,6 +1,5 @@
 ﻿using ConsumerProject.Interfaces;
 using ConsumerProject.models;
-using ConsumerProject.Interfaces;
 using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
