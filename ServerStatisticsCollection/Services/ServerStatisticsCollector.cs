@@ -1,8 +1,8 @@
 ﻿using Microsoft.Extensions.Options;
+using ServerStatisticsCollection.Interfaces;
 using ServerStatisticsCollection.Models;
 using ServerStatisticsCollection.Models.ConfigModels;
 using System.Diagnostics;
-using task1.Interfaces;
 namespace ServerStatisticsCollection.Services
 {
     public class ServerStatisticsCollector
