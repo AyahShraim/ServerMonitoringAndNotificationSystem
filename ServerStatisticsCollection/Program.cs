@@ -5,6 +5,7 @@ using ServerStatisticsCollection.Services;
 using ServerStatisticsCollection.Interfaces;
 
 
+
 var configuration = new ConfigurationBuilder()
     .SetBasePath(Directory.GetCurrentDirectory())
     .AddJsonFile("settings/appsettings.json")

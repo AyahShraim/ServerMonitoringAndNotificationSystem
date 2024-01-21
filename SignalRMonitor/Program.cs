@@ -1,6 +1,4 @@
-using Microsoft.AspNetCore.SignalR.Client;
-using Microsoft.Extensions.Configuration;
-using SignalRMonitor;
+using SignalRMonitor.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Configuration.AddJsonFile("appsettings.json");
@@ -17,10 +15,6 @@ app.UseEndpoints(endpoints =>
     endpoints.MapHub<SignalRAlertHub>("/alerthub");
     endpoints.MapGet("/", context => context.Response.WriteAsync("Hello World!"));
 });
-
-var configuration = builder.Configuration;
-var signalRConsumer = SignalREventConsumer.Create(configuration);
-signalRConsumer.SubscribeToEvents();
 
 
 app.Run();

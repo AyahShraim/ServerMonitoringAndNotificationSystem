@@ -1,4 +1,4 @@
-﻿namespace ConsumerProject.Interfaces
+﻿namespace SignalRMonitor.Interfaces
 {
     public interface IAlertService
     {
