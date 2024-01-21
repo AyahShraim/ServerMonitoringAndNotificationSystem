@@ -13,10 +13,13 @@ namespace ConsumerProject.Services
     {
         private readonly RabbitMqConfiguration _rabbitMqConfig;
         private readonly IDbService _mongoDbService;
-        public RabbitMqMessageConsumer(IOptions<RabbitMqConfiguration> rabbitMqConfig, IDbService mongoDbService)
+        private readonly AnomalyDetectionService _anomalyDetectionService;
+
+        public RabbitMqMessageConsumer(IOptions<RabbitMqConfiguration> rabbitMqConfig, IDbService mongoDbService, AnomalyDetectionService anomalyDetectionService)
         {
             _rabbitMqConfig = rabbitMqConfig.Value;
             _mongoDbService = mongoDbService;
+            _anomalyDetectionService = anomalyDetectionService;
         }
 
         public async Task ConsumeAsync<T>(string topic, Action<T> onMessageReceived)
@@ -37,23 +40,23 @@ namespace ConsumerProject.Services
                 var body = args.Body.ToArray();
                 var message = Encoding.UTF8.GetString(body);
                 var deserializedMessage = JsonSerializer.Deserialize<T>(message);
-                PersistToMongoDB(deserializedMessage);
+                await ProcessMessage(deserializedMessage);
                 onMessageReceived?.Invoke(deserializedMessage);
                 await Task.CompletedTask;
                 channel.BasicAck(args.DeliveryTag, multiple: false);
-                Console.WriteLine(deserializedMessage.ToString());
             };
 
-            channel.BasicConsume(queue: queueName, autoAck: false, consumer: consumer);
+           channel.BasicConsume(queue: queueName, autoAck: false, consumer: consumer);
+            await Task.Delay(Timeout.Infinite);
 
-            Console.ReadLine();
         }
 
-        private void PersistToMongoDB<T>(T deserializedMessage)
+        private async Task ProcessMessage<T>(T deserializedMessage)
         {
             if (deserializedMessage is ServerStatistics serverStatistics)
             {
-                _mongoDbService.InsertOne(serverStatistics);
+                await _mongoDbService.InsertOneAsync(serverStatistics);
+                await _anomalyDetectionService.CheckForAnomalies(serverStatistics);
             }
             else
             {
