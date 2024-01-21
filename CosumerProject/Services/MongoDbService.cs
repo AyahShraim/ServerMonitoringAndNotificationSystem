@@ -16,9 +16,9 @@ namespace ConsumerProject.Services
             var database = client.GetDatabase(config.DatabaseName);
             _collection = database.GetCollection<ServerStatistics>("ServerStatistics");
         }
-        public void InsertOne(ServerStatistics serverStatistics)
+        public async Task InsertOneAsync(ServerStatistics serverStatistics)
         {
-            _collection.InsertOne(serverStatistics);
+            await _collection.InsertOneAsync(serverStatistics);
         }
     }
 }
