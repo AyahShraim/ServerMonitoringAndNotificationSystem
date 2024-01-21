@@ -1,20 +1,16 @@
-﻿using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using ServerStatisticsCollection.Publishing.Models.ConfigModels;
-using Newtonsoft.Json;
-using System.Configuration;
-using ServerStatisticsCollection.Models.ConfigModels;
+﻿using Newtonsoft.Json;
+using ConsumerProject.models.ConfigModels;
 using ConsumerProject.Interfaces;
 using ConsumerProject.models;
 using ConsumerProject.Services;
-using ConsumerProject.Interfaces;
-using ConsumerProject.models.ConfigModels;
-using ConsumerProject.Services;
-
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using ServerStatisticsCollection.Models.ConfigModels;
+using Microsoft.AspNetCore.SignalR.Client;
 
 var configuration = new ConfigurationBuilder()
     .SetBasePath(Directory.GetCurrentDirectory())
-    .AddJsonFile("appsettings.json")
+    .AddJsonFile("settings/appsettings.json")
     .Build();
 
 var serviceCollection = new ServiceCollection();
@@ -23,17 +19,20 @@ serviceCollection.Configure<RabbitMqConfiguration>(options => configuration.GetS
 serviceCollection.Configure<MongoDbConfig>(options => configuration.GetSection("MongoDBConfig").Bind(options));
 serviceCollection.Configure<AnomalyDetectionConfig>(options => configuration.GetSection("AnomalyDetectionConfig"));
 
+serviceCollection.Configure<AnomalyDetectionConfig>(options => configuration.GetSection("AnomalyDetectionConfig").Bind(options));
+serviceCollection.AddTransient<AnomalyDetectionService>();
+
 serviceCollection.AddSingleton<IMessageQueueClientConsumer, RabbitMqMessageConsumer>();
-serviceCollection.AddScoped<IDbService, MongoDbService>(); 
+var signalRConfig = configuration.GetSection("SignalRConfig").Get<SignalRConfig>();
+
+serviceCollection.AddScoped<IDbService, MongoDbService>();
+var hubConnection = new HubConnectionBuilder()
+    .WithUrl(signalRConfig.SignalRUrl)
+    .Build();
+
+serviceCollection.AddSingleton(hubConnection);
 
 var serviceProvider = serviceCollection.BuildServiceProvider();
-var mongoDbConfig = configuration.GetSection("MongoDbConfig").Get<MongoDbConfig>();
-Console.WriteLine($"ConnectionString: {mongoDbConfig.ConnectionString}, DatabaseName: {mongoDbConfig.DatabaseName}");
-
-
-
-
-
 var messageConsumer = serviceProvider.GetRequiredService<IMessageQueueClientConsumer>();
 await messageConsumer.ConsumeAsync<ServerStatistics>("ServerStatistics.*", ProcessServerStatisticsMessage);
 
