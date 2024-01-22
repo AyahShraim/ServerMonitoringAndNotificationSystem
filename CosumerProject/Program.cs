@@ -1,12 +1,11 @@
-﻿using Newtonsoft.Json;
-using ConsumerProject.models.ConfigModels;
+﻿using ConsumerProject.models.ConfigModels;
 using ConsumerProject.Interfaces;
-using ConsumerProject.models;
 using ConsumerProject.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using ServerStatisticsCollection.Models.ConfigModels;
 using Microsoft.AspNetCore.SignalR.Client;
+using RabbitMQClientLibrary.Configuration;
+using Microsoft.Extensions.Logging;
 
 var configuration = new ConfigurationBuilder()
     .SetBasePath(Directory.GetCurrentDirectory())
@@ -14,30 +13,30 @@ var configuration = new ConfigurationBuilder()
     .Build();
 
 var serviceCollection = new ServiceCollection();
+serviceCollection.AddLogging(builder =>
+{
+    builder.AddConsole();
+});
 serviceCollection.AddSingleton<IConfiguration>(configuration);
-serviceCollection.Configure<RabbitMqConfiguration>(options => configuration.GetSection("RabbitMqSettings").Bind(options));
+
+serviceCollection.Configure<RabbitMQConfiguration>(options => configuration.GetSection("RabbitMqSettings").Bind(options));
 serviceCollection.Configure<MongoDbConfig>(options => configuration.GetSection("MongoDBConfig").Bind(options));
-serviceCollection.Configure<AnomalyDetectionConfig>(options => configuration.GetSection("AnomalyDetectionConfig"));
-
 serviceCollection.Configure<AnomalyDetectionConfig>(options => configuration.GetSection("AnomalyDetectionConfig").Bind(options));
-serviceCollection.AddTransient<AnomalyDetectionService>();
-
-serviceCollection.AddSingleton<IMessageQueueClientConsumer, RabbitMqMessageConsumer>();
-var signalRConfig = configuration.GetSection("SignalRConfig").Get<SignalRConfig>();
 
 serviceCollection.AddScoped<IDbService, MongoDbService>();
+serviceCollection.AddTransient<AnomalyDetectionService>();
+serviceCollection.AddSingleton<IMessageQueueClientConsumer, RabbitMqMessageConsumer>();
+
+var signalRConfig = configuration.GetSection("SignalRConfig").Get<SignalRConfig>();
 var hubConnection = new HubConnectionBuilder()
     .WithUrl(signalRConfig.SignalRUrl)
     .Build();
-
 serviceCollection.AddSingleton(hubConnection);
 
-var serviceProvider = serviceCollection.BuildServiceProvider();
-var messageConsumer = serviceProvider.GetRequiredService<IMessageQueueClientConsumer>();
-await messageConsumer.ConsumeAsync<ServerStatistics>("ServerStatistics.*", ProcessServerStatisticsMessage);
+serviceCollection.AddTransient<MessageProcessingService>();
 
-void ProcessServerStatisticsMessage(ServerStatistics serverStatistics)
-{
-    // Your logic to process the received server statistics message
-    Console.WriteLine($"Received Server Statistics: {JsonConvert.SerializeObject(serverStatistics)}");
-}
+var serviceProvider = serviceCollection.BuildServiceProvider();
+var messageProcessor = serviceProvider.GetRequiredService<MessageProcessingService>();
+await messageProcessor.StartProcessingAsync("ServerStatistics.*");
+
+
