@@ -1,5 +1,5 @@
 ﻿using Microsoft.Extensions.Options;
-using ServerStatisticsCollection.Interfaces;
+using RabbitMQClientLibrary.MessagePublishingService;
 using ServerStatisticsCollection.Models;
 using ServerStatisticsCollection.Models.ConfigModels;
 using System.Diagnostics;
@@ -7,16 +7,16 @@ namespace ServerStatisticsCollection.Services
 {
     public class ServerStatisticsCollector
     {
-        private ServerStatisticsConfig _serverStatisticsConfig;
-        private readonly IMessageQueueClientPublisher _messageQueueClient;
+        private readonly ServerStatisticsConfig _serverStatisticsConfig;
+        private readonly IMessageQueueClientPublisher _messagePublisher;
 
-        public ServerStatisticsCollector(IMessageQueueClientPublisher messageQueueClient, IOptions<ServerStatisticsConfig> serverStatisticsConfig)
+        public ServerStatisticsCollector(IMessageQueueClientPublisher messagePublisher, IOptions<ServerStatisticsConfig> serverStatisticsConfig)
         {
             _serverStatisticsConfig = serverStatisticsConfig.Value;
-            _messageQueueClient = messageQueueClient;
+            _messagePublisher = messagePublisher ?? throw new ArgumentNullException(nameof(messagePublisher));
         }
 
-        private ServerStatistics CollectServerStatistics()
+        private static ServerStatistics CollectServerStatistics()
         {
             var memoryUsage = GetMemoryUsage();
             var availableMemory = GetAvailableMemory();
@@ -38,7 +38,7 @@ namespace ServerStatisticsCollection.Services
             while (await timer.WaitForNextTickAsync())
             {
                 var statistics = CollectServerStatistics();
-                await _messageQueueClient.PublishAsync($"ServerStatistics.{_serverStatisticsConfig.ServerIdentifier}", statistics);
+                await _messagePublisher.PublishAsync($"ServerStatistics.{_serverStatisticsConfig.ServerIdentifier}", statistics, null);
             }
         }
 
