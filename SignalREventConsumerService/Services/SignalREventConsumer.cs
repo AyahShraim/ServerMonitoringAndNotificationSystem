@@ -39,12 +39,12 @@ namespace SignalREventConsumerService.Services
         {
             _hubConnection.On<string>("ReceiveAnomalyAlertAsync", (message) =>
             {
-                _logger.LogInformation($"Received Anomaly Alert: {message}");
+                _logger.LogInformation($"Anomaly Alert Sent to Alert Hub: {message}");
             });
 
             _hubConnection.On<string>("ReceiveHighUsageAlertAsync", (message) =>
             {
-                _logger.LogInformation($"Received High Usage Alert: {message}");
+                _logger.LogInformation($"High Usage Alert Sent to ALert Hub: {message}");
             });
         }
 
@@ -53,5 +53,4 @@ namespace SignalREventConsumerService.Services
             _hubConnection.DisposeAsync();
         }
     }
-
 }
