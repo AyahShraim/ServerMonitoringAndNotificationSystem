@@ -16,7 +16,7 @@ namespace ServerStatisticsCollection.Services
             _messagePublisher = messagePublisher ?? throw new ArgumentNullException(nameof(messagePublisher));
         }
 
-        private static ServerStatistics CollectServerStatistics()
+        private ServerStatistics CollectServerStatistics()
         {
             var memoryUsage = GetMemoryUsage();
             var availableMemory = GetAvailableMemory();
@@ -24,10 +24,11 @@ namespace ServerStatisticsCollection.Services
 
             return new ServerStatistics
             {
+                ServerIdentifier = _serverStatisticsConfig.ServerIdentifier,
                 MemoryUsage = memoryUsage,
                 AvailableMemory = availableMemory,
                 CpuUsage = cpuUsage,
-                Timestamp = DateTime.UtcNow
+                Timestamp = DateTime.Now
             };
         }
 

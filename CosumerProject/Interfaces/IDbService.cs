@@ -2,8 +2,8 @@
 
 namespace ConsumerProject.Interfaces
 {
-    public interface IDbService
+    public interface IDbService<T>
     {
-        Task InsertOneAsync(ServerStatistics serverStatistics);
+        Task InsertOneAsync(T data);
     }
 }

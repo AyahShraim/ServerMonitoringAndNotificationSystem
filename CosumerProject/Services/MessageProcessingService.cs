@@ -6,10 +6,10 @@ namespace ConsumerProject.Services
     public class MessageProcessingService
     {
         private readonly IMessageQueueClientConsumer _messageConsumer;
-        private readonly IDbService _mongoDbService;
+        private readonly IDbService<ServerStatistics> _mongoDbService;
         private readonly AnomalyDetectionService _anomalyDetectionService;
 
-        public MessageProcessingService(IMessageQueueClientConsumer messageConsumer, IDbService mongoDbService, AnomalyDetectionService anomalyDetectionService)
+        public MessageProcessingService(IMessageQueueClientConsumer messageConsumer, IDbService<ServerStatistics> mongoDbService, AnomalyDetectionService anomalyDetectionService)
         {
             _messageConsumer = messageConsumer;
             _anomalyDetectionService = anomalyDetectionService;

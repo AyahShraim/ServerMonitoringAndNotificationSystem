@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.SignalR.Client;
 using RabbitMQClientLibrary.Configuration;
 using Microsoft.Extensions.Logging;
+using ConsumerProject.models;
 
 var configuration = new ConfigurationBuilder()
     .SetBasePath(Directory.GetCurrentDirectory())
@@ -23,7 +24,7 @@ serviceCollection.Configure<RabbitMQConfiguration>(options => configuration.GetS
 serviceCollection.Configure<MongoDbConfig>(options => configuration.GetSection("MongoDBConfig").Bind(options));
 serviceCollection.Configure<AnomalyDetectionConfig>(options => configuration.GetSection("AnomalyDetectionConfig").Bind(options));
 
-serviceCollection.AddScoped<IDbService, MongoDbService>();
+serviceCollection.AddScoped<IDbService<ServerStatistics>, MongoDbService>();
 serviceCollection.AddTransient<AnomalyDetectionService>();
 serviceCollection.AddSingleton<IMessageQueueClientConsumer, RabbitMqMessageConsumer>();
 

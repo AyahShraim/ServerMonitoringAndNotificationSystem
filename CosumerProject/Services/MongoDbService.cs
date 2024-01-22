@@ -5,7 +5,7 @@ using ConsumerProject.Interfaces;
 using ConsumerProject.models.ConfigModels;
 namespace ConsumerProject.Services
 {
-    public class MongoDbService : IDbService
+    public class MongoDbService : IDbService<ServerStatistics>
     {
         private readonly IMongoCollection<ServerStatistics> _collection;
 
